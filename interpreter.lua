@@ -9,7 +9,9 @@ function CreateContext()
     memory = {},
     messages = {},
     buffer = "",
-    cells = {}
+    cells = {},
+    counter = 1,
+    stopped = false
   }
 end
 
@@ -30,6 +32,27 @@ function PrintContext(context)
   end
 end
 
+function PrintCode(context, tree)
+  tree:foreach(function(node)
+    print(FormatLine(node))
+  end)
+end
+
+function FormatLine(node)
+  if node.type == NodeTypes.FunctionCall then
+    local buffer = colors.cyan .. node.value .. colors.reset
+    if node.args then
+      buffer = buffer .. " " .. node.args:map(FormatLine):join(" ")
+    end
+    return buffer
+  elseif node.type == NodeTypes.Variable then
+    return colors.magenta .. node.value .. colors.reset
+  elseif node.type == NodeTypes.Number then
+    return colors.red .. node.value .. colors.reset
+  end
+  return node.value
+end
+
 function InterpretCall(context, node)
   if not MlogFunctions[node.value] then
     print(colors.yellow .. "[WARNING] Unimplemented function " .. node.value .. colors.reset)
@@ -38,10 +61,16 @@ function InterpretCall(context, node)
   MlogFunctions[node.value](context, table.unpack(node.args))
 end
 
+function InterpretCodeOnce(context, tree)
+  local node = tree[context.counter]
+  if node.type == NodeTypes.FunctionCall then
+    InterpretCall(context, node)
+  end
+  context.counter = context.counter + 1
+end
+
 function InterpretCode(context, tree)
-  tree:foreach(function(node)
-    if node.type == NodeTypes.FunctionCall then
-      InterpretCall(context, node)
-    end
-  end)
+  while not context.stopped do
+    InterpretCodeOnce(context, tree)
+  end
 end

@@ -137,11 +137,24 @@ MlogFunctions = {
 
   write = function(context, value, cell, index)
     if not context.cells[cell.value] then
-      context.cells[cell.value] = {
-        [0] = 0
-      }
+      context.cells[cell.value] = {}
     end
     context.cells[cell.value][index.value] = GetValueFromContext(context, value)
   end,
 
+  jump = function(context, line, operationName, lhs, rhs)
+    local condition = false
+    if operationName.value == "always" then
+      condition = true
+    else
+      condition = MlogOperations[operationName.value](GetValueFromContext(context, lhs), GetValueFromContext(context, rhs))
+    end
+    if condition then
+      context.counter = line.value
+    end
+  end,
+
+  ["end"] = function(context)
+    context.stopped = true
+  end
 }

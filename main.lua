@@ -60,13 +60,11 @@ jump 15 always 0 0
 ]]
 
 local simple = [[
-set a 1
-set b 3
-op div c a b
-write c cell1 0
-print "results: "
-print c
-printFlush message1
+set x -1
+jump 4 lessThan x 0
+write x cell1 0
+end
+write 69420 cell1 0
 ]]
 
 local tokens = TokenizeCode(simple)
@@ -75,11 +73,12 @@ local tokens = TokenizeCode(simple)
 local ast = ParseCode(tokens)
 --print(pretty.write(ast))
 
-print(simple)
+--print(simple)
 local ctx = CreateContext()
 
 InterpretCode(ctx, ast)
 
+PrintCode(ctx, ast)
 PrintContext(ctx)
 
 --local res = ParseCode(TokenizeCode(code))

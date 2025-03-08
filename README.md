@@ -7,6 +7,10 @@ A mindustry logic interpreter made in Lua. Very W.I.P.
 - A pure testing environment
 - Infinite memory (though you should probably limit your usage)
 
+## Compatibility
+
+Because this is a work in progress project, compatibility with in-game logic is not guaranteed. I also need to write tests to make sure everything works correctly.
+
 ## To-Do
 
 - Strict mode

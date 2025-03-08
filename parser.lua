@@ -74,9 +74,10 @@ end
 
 --- @param tokens string[]
 function ParseLine(tokens)
-  if tokens[1] == "#" then
+  if stringx.startswith(tokens[1], "#") then
     return {
-      type = NodeTypes.Comment
+      type = NodeTypes.Comment,
+      value = tokens[1]
     }
   elseif stringx.endswith(tokens[1], ":") then
     return {
@@ -94,5 +95,9 @@ end
 
 --- @param tokens string[][]
 function ParseCode(tokens)
-  return List(tokens):map(ParseLine)
+  return List(tokens):map(ParseLine):append({
+    type = NodeTypes.FunctionCall,
+    value = "end",
+    args = List()
+  })
 end
