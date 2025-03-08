@@ -1,5 +1,7 @@
 local simplex = require("simplex")
 List = require("pl.List")
+require("utils")
+local colors = require("colors")
 
 -- All mlog `op` functions
 --
@@ -103,11 +105,29 @@ MlogOperations = {
 }
 
 function GetValueFromContext(context, node)
-  if node.type == NodeTypes.Variable then
+  if node.type ~= NodeTypes.Variable then
+    return node.value
+  end
+  if MlogConstants[node.value] then
+    return MlogConstants[node.value](context)
+  end
+  if context.memory[node.value] then
     return context.memory[node.value]
   end
-
   return node.value
+end
+
+function GetValueFromContextNullish(context, node)
+  if node.type ~= NodeTypes.Variable then
+    return node.value
+  end
+  if MlogConstants[node.value] then
+    return MlogConstants[node.value](context)
+  end
+  if context.memory[node.value] then
+    return context.memory[node.value]
+  end
+  return nil
 end
 
 MlogFunctions = {
@@ -118,8 +138,8 @@ MlogFunctions = {
 
   -- op operationName outName lhs rhs
   op = function(context, operationName, outName, lhs, rhs)
-    context.memory[outName.value] = MlogOperations[operationName.value](GetValueFromContext(context, lhs),
-      GetValueFromContext(context, rhs))
+    context.memory[outName.value] = MlogOperations[operationName.value](GetValueFromContextNullish(context, lhs),
+      GetValueFromContextNullish(context, rhs))
   end,
 
   print = function(context, text)
@@ -132,22 +152,30 @@ MlogFunctions = {
   end,
 
   read = function(context, value, cell, index)
-    context.memory[value.value] = context.cells[cell.value][index.value]
+    local cellRef = GetValueFromContext(context, cell)
+    if not context.cells[cellRef] then
+      context.cells[cellRef] = {}
+    end
+    context.memory[GetValueFromContext(context, value)] = context.cells[cellRef][GetValueFromContext(context, index)]
   end,
 
   write = function(context, value, cell, index)
-    if not context.cells[cell.value] then
-      context.cells[cell.value] = {}
+    local cellRef = GetValueFromContext(context, cell)
+    if not context.cells[cellRef] then
+      context.cells[cellRef] = {}
     end
-    context.cells[cell.value][index.value] = GetValueFromContext(context, value)
+    context.cells[cellRef][GetValueFromContext(context, index)] = GetValueFromContext(context, value)
   end,
 
   jump = function(context, line, operationName, lhs, rhs)
     local condition = false
+    DebugPrint(lhs)
+    DebugPrint(rhs)
     if operationName.value == "always" then
       condition = true
     else
-      condition = MlogOperations[operationName.value](GetValueFromContext(context, lhs), GetValueFromContext(context, rhs))
+      condition = MlogOperations[operationName.value](GetValueFromContext(context, lhs),
+        GetValueFromContext(context, rhs))
     end
     if condition then
       context.counter = line.value
@@ -156,5 +184,31 @@ MlogFunctions = {
 
   ["end"] = function(context)
     context.stopped = true
+  end,
+
+  ubind = function(context, unitName)
+    print(colors.green .. "Binding unit " .. GetValueFromContext(context, unitName) .. colors.reset)
+  end,
+
+  ucontrol = function(context, controlName, arg1, arg2, arg3, arg4, arg5)
+    local getVals = function(valName)
+      GetValueFromContextNullish(context, valName)
+    end
+    print(colors.green ..
+    "Unit control command `" ..
+    controlName.value ..
+    "` invoked with arguments " .. List({ arg1, arg2, arg3, arg4, arg5 }):map(getVals):join(" ") .. colors.reset)
+  end
+}
+
+MlogConstants = {
+  ["@ipt"] = function()
+    return 69420
+  end,
+  ["@counter"] = function(context)
+    return context.counter
+  end,
+  ["@time"] = function()
+    return os.time()
   end
 }

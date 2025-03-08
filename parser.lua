@@ -3,7 +3,6 @@ local List = require "pl.List"
 
 NodeTypes = {
   FunctionCall = "FunctionCall",
-  Constant = "Constant",
   Variable = "Variable",
   Number = "Number",
   String = "String",
@@ -53,11 +52,6 @@ function ParseKeyword(token)
     return {
       type = NodeTypes.Number,
       value = number
-    }
-  elseif stringx.startswith(token, "@") then
-    return {
-      type = NodeTypes.Constant,
-      value = stringx.lstrip(token, "@")
     }
   elseif stringx.startswith(token, "\"") and stringx.endswith(token, "\"") then
     return {

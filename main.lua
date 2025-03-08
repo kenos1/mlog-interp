@@ -3,68 +3,26 @@ require("interpreter")
 local pretty = require("pl.pretty")
 
 local code = [[
-print "Mining processor ( variant)"
-print "Configuration is in the manager processor, not here."
-print "Mining cannot be disabled for a unit type by editing this processor."
-op div refreshInterval 25 @ipt
-read unitId cell1 0
-jump 4 lessThan unitId 4
-lookup unit unit unitId
-ubind unit
-ulocate building core false _ core.x core.y core.found core
-jump 4 notEqual core.found true
-read coreFullAmount cell1 19
-jump 4 lessThan coreFullAmount 1
-read oreId cell1 1
-lookup item ore oreId
-jump 4 equal ore null
-read unitId cell1 0
-lookup unit unit unitId
-read coreLowAmount cell1 20
-read coreFullAmount cell1 19
-read oreId cell1 1
-lookup item ore oreId
-sensor core[ore] core ore
-op add nextRefresh @second refreshInterval
-jump 15 lessThan nextRefresh @second
-ubind unit
-sensor @unit.mining @unit @mining
-jump 23 equal @unit.mining false
-sensor @unit.flag @unit @flag
-jump 23 notEqual @unit.flag 0
-ulocate building storage false _ storage.x storage.y storage.found storage
-sensor storage.copper storage @copper
-jump 33 lessThan storage.copper 1001
-ucontrol itemDrop storage 1e5 0 0 0
-ulocate building core false _ core.x core.y core.found core
-ucontrol itemDrop core 1e5 0 0 0
-ucontrol within core.x core.y 24 nearCore 0
-jump 24 equal nearCore false
-sensor @unit.firstItem @unit @firstItem
-jump 24 strictEqual @unit.firstItem null
-jump 23 strictEqual @unit.firstItem ore
-sensor coreAmount core @unit.firstItem
-jump 48 greaterThanEq coreAmount coreFullAmount
-jump 23 greaterThanEq core[ore] coreLowAmount
-jump 24 lessThanEq coreAmount coreLowAmount
-ucontrol mine ore.x ore.y 0 0 0
-ucontrol pathfind core.x core.y 0 0 0
-jump 24 greaterThan nextRefresh @second
-jump 15 always 0 0
-ulocate ore core _ ore ore.x ore.y ore.found _
-ucontrol itemDrop @air 100 0 0 0
-ucontrol mine ore.x ore.y 0 0 0
-ucontrol pathfind ore.x ore.y 0 0 0
-jump 24 greaterThan nextRefresh @second
-jump 15 always 0 0
+lookup unit unit:2:6 unitIndex:1:4
+jump 4 notEqual unit:2:6 0
+set unitIndex:1:4 0
+end
+ubind unit:2:6
+jump 11 notEqual @unit firstUnit:3:4
+set firstUnit:3:4 null
+write count:4:4 cell1 unitIndex:1:4
+set count:4:4 0
+op add unitIndex:1:4 unitIndex:1:4 1
+end
+op strictEqual &t0 firstUnit:3:4 null
+jump 14 equal &t0 0
+set firstUnit:3:4 @unit
+op add count:4:4 count:4:4 1
 ]]
 
 local simple = [[
-set x -1
-jump 4 lessThan x 0
-write x cell1 0
-end
-write 69420 cell1 0
+ubind @fortress
+ucontrol move 50 50
 ]]
 
 local tokens = TokenizeCode(simple)
@@ -76,10 +34,7 @@ local ast = ParseCode(tokens)
 --print(simple)
 local ctx = CreateContext()
 
-InterpretCode(ctx, ast)
-
-PrintCode(ctx, ast)
-PrintContext(ctx)
+DebugCode(ctx, ast)
 
 --local res = ParseCode(TokenizeCode(code))
 

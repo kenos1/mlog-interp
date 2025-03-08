@@ -3,6 +3,7 @@ require("parser")
 local pretty = require("pl.pretty")
 local colors = require("colors")
 List = require("pl.List")
+local stringx = require("pl.stringx")
 
 function CreateContext()
   return {
@@ -16,9 +17,23 @@ function CreateContext()
 end
 
 function PrintContext(context)
+  print(colors.onyellow .. colors.black .. " Constants " .. colors.reset)
+  for constName, func in pairs(MlogConstants) do
+    print(colors.yellow .. constName .. colors.reset .. " -> " .. func(context))
+  end
   print(colors.onmagenta .. colors.black .. " Variables " .. colors.reset)
   for varName, val in pairs(context.memory) do
-    print(colors.magenta .. varName .. colors.reset .. " -> " .. val .. colors.dim .. " [" .. type(val) .. "]" .. colors.reset)
+    local display = val
+    if type(val) == "boolean" then
+      if (val) then
+        display = "true"
+      else
+        display = "false"
+      end
+    elseif type(val) == "nil" then
+      display = "null"
+    end
+    print(colors.magenta .. varName .. colors.reset .. " -> " .. display .. colors.dim .. " [" .. type(val) .. "]" .. colors.reset)
   end
 
   print(colors.ongreen .. colors.black .. " Message Blocks " .. colors.reset)
@@ -30,19 +45,29 @@ function PrintContext(context)
   for memName, content in pairs(context.cells) do
     print(colors.cyan .. memName .. colors.reset .. " " .. pretty.write(content))
   end
+
+  print()
 end
 
 function PrintCode(context, tree)
+  local maxLineNumWidth = tostring(tree:len()):len()
+  local line = 0
   tree:foreach(function(node)
-    print(FormatLine(node))
+    local lineNum = " | "
+    line = line + 1
+    if context.counter == line then
+      lineNum = "-->"
+    end
+    lineNum = stringx.rjust(tostring(line), maxLineNumWidth, " ") .. lineNum
+    print(colors.dim .. lineNum .. colors.reset ..FormatNode(node))
   end)
 end
 
-function FormatLine(node)
+function FormatNode(node)
   if node.type == NodeTypes.FunctionCall then
     local buffer = colors.cyan .. node.value .. colors.reset
     if node.args then
-      buffer = buffer .. " " .. node.args:map(FormatLine):join(" ")
+      buffer = buffer .. " " .. node.args:map(FormatNode):join(" ")
     end
     return buffer
   elseif node.type == NodeTypes.Variable then
@@ -71,6 +96,16 @@ end
 
 function InterpretCode(context, tree)
   while not context.stopped do
+    InterpretCodeOnce(context, tree)
+  end
+end
+
+function DebugCode(context, tree)
+  while not context.stopped do
+    PrintCode(context, tree)
+    PrintContext(context)
+    print("Press [ENTER] to take another step.")
+    local _ = io.read()
     InterpretCodeOnce(context, tree)
   end
 end
