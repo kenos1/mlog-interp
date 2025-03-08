@@ -182,6 +182,10 @@ MlogFunctions = {
     end
   end,
 
+  stop = function (context)
+    context.stopped = true
+  end,
+
   ["end"] = function(context)
     context.stopped = true
   end,
