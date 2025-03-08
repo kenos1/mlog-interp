@@ -64,6 +64,7 @@ set a 1
 set b 3
 op div c a b
 write c cell1 0
+print "results: "
 print c
 printFlush message1
 ]]

@@ -44,7 +44,7 @@ function TokenizeLine(line)
     end
   end)
 
-  return tokens
+  return tokens:filter(function(token) return token ~= "" end)
 end
 
 function ParseKeyword(token)

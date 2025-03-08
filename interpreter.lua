@@ -31,6 +31,10 @@ function PrintContext(context)
 end
 
 function InterpretCall(context, node)
+  if not MlogFunctions[node.value] then
+    print(colors.yellow .. "[WARNING] Unimplemented function " .. node.value .. colors.reset)
+    return
+  end
   MlogFunctions[node.value](context, table.unpack(node.args))
 end
 
